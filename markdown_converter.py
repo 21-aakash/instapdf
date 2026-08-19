@@ -2,6 +2,7 @@ import io
 import re
 import logging
 from typing import List, Optional
+from concurrent.futures import ThreadPoolExecutor
 from PIL import Image
 
 logger = logging.getLogger(__name__)
@@ -24,13 +25,26 @@ def get_ocr_engine():
 def extract_text_from_image(image_bytes: bytes) -> str:
     """
     Extracts high-accuracy text and structure from a slide image using
-    lightweight ONNX-powered RapidOCR with fallback to MarkItDown.
+    lightweight ONNX-powered RapidOCR with optimized image downscaling.
     """
+    # Downscale for ultra-fast ONNX OCR inference without loss of text legibility
+    try:
+        img = Image.open(io.BytesIO(image_bytes))
+        if max(img.size) > 800:
+            img.thumbnail((800, 800), Image.Resampling.LANCZOS)
+            buf = io.BytesIO()
+            img.save(buf, format="JPEG", quality=85)
+            ocr_bytes = buf.getvalue()
+        else:
+            ocr_bytes = image_bytes
+    except Exception:
+        ocr_bytes = image_bytes
+
     # 1. Primary: RapidOCR (Fast, cross-platform, pure ONNX, highly accurate on slides)
     engine = get_ocr_engine()
     if engine:
         try:
-            result, _ = engine(image_bytes)
+            result, _ = engine(ocr_bytes)
             if result:
                 lines = [item[1].strip() for item in result if item and len(item) > 1 and item[1].strip()]
                 if lines:
@@ -53,16 +67,6 @@ def extract_text_from_image(image_bytes: bytes) -> str:
     except Exception:
         pass
 
-    # 3. Tertiary: PyTesseract (if system tesseract binary exists)
-    try:
-        import pytesseract
-        img = Image.open(io.BytesIO(image_bytes))
-        txt = pytesseract.image_to_string(img)
-        if txt and txt.strip():
-            return txt.strip()
-    except Exception:
-        pass
-
     return ""
 
 
@@ -72,30 +76,26 @@ def format_slide_text_as_markdown(raw_text: str, slide_num: int) -> str:
     with headings, bullet points, and code formatting where applicable.
     """
     if not raw_text or not raw_text.strip():
-        return f"*Slide {slide_num} visual diagram / card without legible text.*"
+        return f"*Slide {slide_num} visual diagram / card.*"
 
     lines = [l.strip() for l in raw_text.splitlines() if l.strip()]
     if not lines:
         return f"*Slide {slide_num} visual card.*"
 
     formatted = []
-    # If the first line looks like a title, make it an H3
     first = lines[0]
-    if len(first) < 60 and not first.startswith(("-", "*", "•", "1.", "2.")):
+    if len(first) < 65 and not first.startswith(("-", "*", "•", "1.", "2.")):
         formatted.append(f"### {first}")
         body_lines = lines[1:]
     else:
         body_lines = lines
 
     for line in body_lines:
-        # Detect bullet points
         if line.startswith(("•", "·", "▪", "▫", "-")):
             clean = re.sub(r"^[•·▪▫-]\s*", "", line)
             formatted.append(f"- {clean}")
-        # Detect numbered lists
         elif re.match(r"^\d+[\.\)]\s+", line):
             formatted.append(line)
-        # Regular paragraph line
         else:
             formatted.append(line)
 
@@ -109,7 +109,7 @@ def convert_slides_to_markdown(
 ) -> str:
     """
     Converts all slides of an Instagram knowledge carousel into a clean, 
-    structured Markdown document.
+    structured Markdown document using concurrent OCR processing.
     """
     doc = [
         f"# 📚 Knowledge Notes: Instagram Carousel ({shortcode})",
@@ -128,11 +128,14 @@ def convert_slides_to_markdown(
             ""
         ])
 
-    for idx, raw in enumerate(images_bytes, 1):
+    # Run OCR across slides concurrently using ThreadPoolExecutor
+    with ThreadPoolExecutor(max_workers=min(len(images_bytes), 4)) as executor:
+        slide_texts = list(executor.map(extract_text_from_image, images_bytes))
+
+    for idx, raw_text in enumerate(slide_texts, 1):
         doc.append(f"## 📄 Slide {idx}")
         doc.append("")
 
-        raw_text = extract_text_from_image(raw)
         formatted_md = format_slide_text_as_markdown(raw_text, idx)
         doc.append(formatted_md)
 
