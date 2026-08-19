@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Instagram Carousel to PDF / Image Downloader (FastAPI)
+Instagram Carousel to PDF / Markdown / Image Downloader (FastAPI)
 Run: python app.py  ->  http://localhost:7860
 """
 
@@ -23,13 +23,14 @@ from extractor import (
     fetch_image_bytes,
     convert_images_to_pdf
 )
+from markdown_converter import convert_slides_to_markdown
 
 PORT = int(os.environ.get("PORT", 7860))
 
 app = FastAPI(
-    title="Instagram Carousel to PDF API",
-    version="2.0.0",
-    description="High-performance async tool to convert public Instagram carousels and posts into PDFs or image packages."
+    title="InstaPDF & Knowledge Markdown API",
+    version="2.1.0",
+    description="High-performance async tool to convert public Instagram carousels into high-DPI PDFs, clean Markdown notes, or image packages."
 )
 
 app.add_middleware(
@@ -50,7 +51,7 @@ class PreviewRequest(BaseModel):
 
 class DownloadRequest(BaseModel):
     url: str
-    format: Literal["pdf", "zip"] = "pdf"
+    format: Literal["pdf", "md", "zip"] = "pdf"
     session_id: Optional[str] = ""
 
 
@@ -61,7 +62,7 @@ async def index_view(request: Request):
 
 @app.api_route("/health", methods=["GET", "HEAD"])
 async def health_check():
-    return {"status": "healthy", "service": "insta-carousel-to-pdf"}
+    return {"status": "healthy", "service": "insta-carousel-to-pdf-and-markdown"}
 
 
 @app.post("/api/preview")
@@ -86,7 +87,7 @@ async def preview_carousel(req: PreviewRequest):
 
 @app.post("/api/download")
 async def download_carousel(req: DownloadRequest):
-    """Downloads all high-res slides and returns compiled PDF or ZIP archive."""
+    """Downloads all high-res slides and returns compiled PDF, Markdown (.md), or ZIP archive."""
     try:
         shortcode = parse_shortcode(req.url)
     except ValueError as e:
@@ -101,18 +102,19 @@ async def download_carousel(req: DownloadRequest):
     if not slides:
         raise HTTPException(status_code=404, detail="No downloadable images found in this post.")
 
-    # Fetch all slides in parallel / memory
+    # Fetch all slides into memory
     images_bytes: List[bytes] = []
     for item in slides:
         try:
             b = fetch_image_bytes(item["url"])
             images_bytes.append(b)
-        except Exception as e:
+        except Exception:
             continue
 
     if not images_bytes:
         raise HTTPException(status_code=502, detail="Failed to fetch image frames from CDN.")
 
+    # Format 1: Single Multi-Page PDF
     if req.format == "pdf":
         try:
             pdf_data = convert_images_to_pdf(images_bytes)
@@ -125,8 +127,23 @@ async def download_carousel(req: DownloadRequest):
             )
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"PDF generation error: {e}")
+
+    # Format 2: Markdown Knowledge Document
+    elif req.format == "md":
+        try:
+            md_content = convert_slides_to_markdown(images_bytes, shortcode)
+            return StreamingResponse(
+                io.BytesIO(md_content.encode("utf-8")),
+                media_type="text/markdown; charset=utf-8",
+                headers={
+                    "Content-Disposition": f'attachment; filename="insta_{shortcode}_notes.md"'
+                }
+            )
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Markdown conversion error: {e}")
+
+    # Format 3: ZIP Package of high-res JPEGs
     else:
-        # ZIP Package
         zip_buf = io.BytesIO()
         with zipfile.ZipFile(zip_buf, "w", zipfile.ZIP_DEFLATED) as zf:
             for idx, raw in enumerate(images_bytes, 1):
@@ -143,6 +160,5 @@ async def download_carousel(req: DownloadRequest):
 
 if __name__ == "__main__":
     import uvicorn
-    # Auto-open browser tab after 1 second on local run
     Timer(1.2, lambda: webbrowser.open(f"http://localhost:{PORT}")).start()
     uvicorn.run("app:app", host="0.0.0.0", port=PORT, reload=False)
