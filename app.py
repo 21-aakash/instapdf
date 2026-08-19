@@ -2,10 +2,11 @@
 """
 Instagram Carousel to PDF / Markdown / Image Downloader (FastAPI)
 Features:
-- Multi-stage resilient extraction
+- Multi-stage resilient extraction (GraphSidecar child nodes)
 - High-DPI lossless PDF generation
 - Microsoft MarkItDown & OCR knowledge extraction
-- Thread-safe IP rate limiting & TTL response caching
+- SlowAPI client IP rate limiting
+- In-memory TTL response caching
 - Production Docker & Cloud readiness
 """
 
@@ -17,10 +18,15 @@ from threading import Timer
 from typing import Optional, List, Literal
 
 from fastapi import FastAPI, HTTPException, Request, Response
-from fastapi.responses import HTMLResponse, StreamingResponse, JSONResponse
+from fastapi.responses import HTMLResponse, StreamingResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
+
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
 
 from extractor import (
     parse_shortcode,
@@ -29,15 +35,22 @@ from extractor import (
     convert_images_to_pdf
 )
 from markdown_converter import convert_slides_to_markdown
-from cache_and_limiter import RateLimiter, TTLCache
+from cache_and_limiter import TTLCache
 
 PORT = int(os.environ.get("PORT", 7860))
 
+# SlowAPI Rate Limiter instance
+limiter = Limiter(key_func=get_remote_address, default_limits=["120/minute"])
+
 app = FastAPI(
     title="InstaPDF & Knowledge Markdown Engine",
-    version="2.2.0",
+    version="2.3.0",
     description="High-performance async tool to convert Instagram carousels into high-DPI PDFs, clean Markdown notes, or image packages."
 )
+
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+app.add_middleware(SlowAPIMiddleware)
 
 app.add_middleware(
     CORSMiddleware,
@@ -49,20 +62,8 @@ app.add_middleware(
 
 templates = Jinja2Templates(directory="templates")
 
-# Rate limiters (per IP)
-preview_limiter = RateLimiter(max_requests=40, window_seconds=60)
-download_limiter = RateLimiter(max_requests=20, window_seconds=60)
-
 # In-memory metadata & slide extraction cache (15 min TTL)
 metadata_cache = TTLCache(ttl_seconds=900, max_entries=200)
-
-
-def get_client_ip(request: Request) -> str:
-    """Extract real client IP from reverse proxy headers (Cloudflare, Render, X-Forwarded-For)."""
-    forwarded = request.headers.get("x-forwarded-for")
-    if forwarded:
-        return forwarded.split(",")[0].strip()
-    return request.client.host if request.client else "127.0.0.1"
 
 
 class PreviewRequest(BaseModel):
@@ -86,22 +87,15 @@ async def health_check():
     return {
         "status": "healthy",
         "service": "insta-carousel-to-pdf-and-markdown",
-        "version": "2.2.0"
+        "version": "2.3.0",
+        "rate_limiting": "SlowAPI enabled"
     }
 
 
 @app.post("/api/preview")
-async def preview_carousel(req: PreviewRequest, request: Request):
+@limiter.limit("40/minute")
+async def preview_carousel(request: Request, req: PreviewRequest):
     """Parses URL, runs cached multi-stage extraction, and returns slide thumbnails."""
-    client_ip = get_client_ip(request)
-    allowed, retry_after = preview_limiter.is_allowed(client_ip)
-    if not allowed:
-        return JSONResponse(
-            status_code=429,
-            content={"detail": f"Rate limit exceeded. Please wait {retry_after} seconds before trying again."},
-            headers={"Retry-After": str(retry_after)}
-        )
-
     try:
         shortcode = parse_shortcode(req.url)
     except ValueError as e:
@@ -133,17 +127,9 @@ async def preview_carousel(req: PreviewRequest, request: Request):
 
 
 @app.post("/api/download")
-async def download_carousel(req: DownloadRequest, request: Request):
+@limiter.limit("20/minute")
+async def download_carousel(request: Request, req: DownloadRequest):
     """Downloads all high-res slides and returns compiled PDF, Markdown (.md), or ZIP archive."""
-    client_ip = get_client_ip(request)
-    allowed, retry_after = download_limiter.is_allowed(client_ip)
-    if not allowed:
-        return JSONResponse(
-            status_code=429,
-            content={"detail": f"Download limit exceeded. Please wait {retry_after} seconds."},
-            headers={"Retry-After": str(retry_after)}
-        )
-
     try:
         shortcode = parse_shortcode(req.url)
     except ValueError as e:
