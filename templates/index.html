@@ -2,106 +2,137 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <title>InstaPDF - Instagram Carousel to PDF</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
       --bg: #090d16;
-      --card-bg: #0f172a;
+      --card-bg: rgba(15, 23, 42, 0.85);
       --border: #1e293b;
+      --border-focus: #e6683c;
       --accent-gradient: linear-gradient(135deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
-      --accent-glow: rgba(220, 39, 67, 0.25);
+      --accent-glow: rgba(220, 39, 67, 0.3);
       --text: #f8fafc;
       --text-muted: #94a3b8;
       --text-dim: #64748b;
-      --radius: 16px;
+      --primary: #38bdf8;
+      --radius: 18px;
     }
 
     body {
       font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
       background-color: var(--bg);
       background-image: 
-        radial-gradient(at 0% 0%, rgba(220, 39, 67, 0.08) 0px, transparent 50%),
-        radial-gradient(at 100% 100%, rgba(56, 189, 248, 0.05) 0px, transparent 50%);
+        radial-gradient(at 0% 0%, rgba(220, 39, 67, 0.12) 0px, transparent 50%),
+        radial-gradient(at 100% 100%, rgba(56, 189, 248, 0.08) 0px, transparent 50%);
       color: var(--text);
       min-height: 100vh;
+      min-height: -webkit-fill-available;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 1.5rem;
+      padding: 1rem;
+      -webkit-tap-highlight-color: transparent;
     }
 
     .container {
       width: 100%;
-      max-width: 600px;
+      max-width: 580px;
+      margin: auto;
     }
 
     .card {
       background: var(--card-bg);
       border: 1px solid var(--border);
       border-radius: var(--radius);
-      padding: 2.25rem;
-      box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5);
-      backdrop-filter: blur(12px);
+      padding: 1.75rem;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+    }
+
+    @media (min-width: 640px) {
+      .card { padding: 2.5rem; }
     }
 
     .header {
       text-align: center;
-      margin-bottom: 2rem;
+      margin-bottom: 1.75rem;
     }
 
     .logo-badge {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      width: 48px;
-      height: 48px;
-      border-radius: 12px;
+      width: 52px;
+      height: 52px;
+      border-radius: 14px;
       background: var(--accent-gradient);
-      margin-bottom: 1rem;
-      box-shadow: 0 8px 16px var(--accent-glow);
+      margin-bottom: 0.85rem;
+      box-shadow: 0 10px 20px var(--accent-glow);
     }
 
     .logo-badge svg {
-      width: 26px;
-      height: 26px;
+      width: 28px;
+      height: 28px;
       fill: #fff;
     }
 
     h1 {
-      font-size: 1.6rem;
-      font-weight: 700;
+      font-size: 1.5rem;
+      font-weight: 800;
       letter-spacing: -0.02em;
-      margin-bottom: 0.4rem;
+      margin-bottom: 0.35rem;
+    }
+
+    @media (min-width: 640px) {
+      h1 { font-size: 1.75rem; }
     }
 
     .subtitle {
-      font-size: 0.9rem;
+      font-size: 0.85rem;
       color: var(--text-muted);
+      line-height: 1.4;
     }
 
     .form-group {
-      margin-bottom: 1.25rem;
+      margin-bottom: 1.2rem;
     }
 
     label {
-      display: block;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
       font-size: 0.75rem;
-      font-weight: 600;
+      font-weight: 700;
       color: var(--text-dim);
-      margin-bottom: 0.4rem;
+      margin-bottom: 0.45rem;
       text-transform: uppercase;
       letter-spacing: 0.06em;
     }
 
+    .paste-btn {
+      background: none;
+      border: none;
+      color: var(--primary);
+      font-size: 0.72rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 3px;
+    }
+
     .input-wrapper {
       position: relative;
+      display: flex;
+      align-items: center;
     }
 
     input[type="text"] {
@@ -109,16 +140,16 @@
       padding: 0.85rem 1rem;
       background: #090d16;
       border: 1px solid var(--border);
-      border-radius: 10px;
+      border-radius: 12px;
       color: var(--text);
-      font-size: 0.95rem;
+      font-size: 0.92rem;
       outline: none;
       transition: all 0.2s;
       font-family: inherit;
     }
 
     input[type="text"]:focus {
-      border-color: #e6683c;
+      border-color: var(--border-focus);
       box-shadow: 0 0 0 3px rgba(230, 104, 60, 0.15);
     }
 
@@ -129,17 +160,17 @@
     .format-selector {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 0.75rem;
-      margin-bottom: 1.5rem;
+      gap: 0.65rem;
+      margin-bottom: 1.25rem;
     }
 
     .format-btn {
-      padding: 0.85rem 1rem;
-      border-radius: 10px;
+      padding: 0.8rem;
+      border-radius: 12px;
       border: 1px solid var(--border);
       background: #090d16;
       color: var(--text-muted);
-      font-size: 0.9rem;
+      font-size: 0.88rem;
       font-weight: 600;
       cursor: pointer;
       display: flex;
@@ -147,30 +178,32 @@
       justify-content: center;
       gap: 0.5rem;
       transition: all 0.2s;
+      user-select: none;
     }
 
     .format-btn.active {
-      border-color: #e6683c;
+      border-color: var(--border-focus);
       color: #fff;
-      background: rgba(230, 104, 60, 0.1);
+      background: rgba(230, 104, 60, 0.12);
+      box-shadow: inset 0 0 0 1px var(--border-focus);
     }
 
     .btn-submit {
       width: 100%;
       padding: 0.95rem;
-      border-radius: 10px;
+      border-radius: 12px;
       border: none;
       background: var(--accent-gradient);
       color: #fff;
-      font-size: 1rem;
-      font-weight: 600;
+      font-size: 0.98rem;
+      font-weight: 700;
       cursor: pointer;
       transition: all 0.2s;
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 0.6rem;
-      box-shadow: 0 6px 20px var(--accent-glow);
+      box-shadow: 0 8px 24px var(--accent-glow);
     }
 
     .btn-submit:hover:not(:disabled) {
@@ -178,38 +211,63 @@
       transform: translateY(-1px);
     }
 
+    .btn-submit:active:not(:disabled) {
+      transform: scale(0.99);
+    }
+
     .btn-submit:disabled {
-      opacity: 0.5;
+      opacity: 0.6;
       cursor: not-allowed;
     }
 
-    .advanced-toggle {
-      font-size: 0.8rem;
-      color: var(--text-dim);
-      background: none;
-      border: none;
-      cursor: pointer;
-      display: block;
-      margin: 1.2rem auto 0;
-      text-decoration: underline;
-    }
-
-    .advanced-section {
+    /* Live Progress Bar */
+    .progress-container {
       display: none;
-      margin-top: 1rem;
-      padding-top: 1rem;
-      border-top: 1px dashed var(--border);
+      margin-top: 1.25rem;
+      background: #090d16;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1rem;
     }
 
-    .advanced-section.show {
-      display: block;
+    .progress-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.8rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
     }
 
-    /* Preview Gallery */
+    .progress-status {
+      color: var(--primary);
+    }
+
+    .progress-percent {
+      color: var(--text-muted);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .progress-track {
+      width: 100%;
+      height: 6px;
+      background: #1e293b;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      width: 0%;
+      height: 100%;
+      background: var(--accent-gradient);
+      border-radius: 6px;
+      transition: width 0.3s ease;
+    }
+
+    /* Preview Gallery & Carousel */
     .preview-section {
       display: none;
       margin-top: 1.5rem;
-      padding-top: 1.5rem;
+      padding-top: 1.25rem;
       border-top: 1px solid var(--border);
     }
 
@@ -217,44 +275,120 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 0.8rem;
+      margin-bottom: 0.75rem;
     }
 
     .slide-badge {
-      background: #1e293b;
+      background: rgba(56, 189, 248, 0.12);
+      border: 1px solid rgba(56, 189, 248, 0.25);
       padding: 0.2rem 0.6rem;
       border-radius: 20px;
       font-size: 0.75rem;
-      color: #38bdf8;
-      font-weight: 600;
+      color: var(--primary);
+      font-weight: 700;
     }
 
-    .gallery-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
-      gap: 0.5rem;
-      max-height: 200px;
-      overflow-y: auto;
-      padding: 0.5rem;
-      background: #090d16;
+    /* Touch Horizontal Swipe Deck */
+    .gallery-deck {
+      display: flex;
+      gap: 0.6rem;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      padding: 0.5rem 0.2rem;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .gallery-deck::-webkit-scrollbar {
+      height: 6px;
+    }
+    .gallery-deck::-webkit-scrollbar-thumb {
+      background: var(--border);
       border-radius: 10px;
-      border: 1px solid var(--border);
     }
 
-    .gallery-grid img {
-      width: 100%;
+    .slide-card {
+      position: relative;
+      flex: 0 0 110px;
       aspect-ratio: 1;
-      object-fit: cover;
-      border-radius: 6px;
+      border-radius: 10px;
+      overflow: hidden;
       border: 1px solid var(--border);
+      cursor: pointer;
+      scroll-snap-align: start;
+      transition: transform 0.15s;
+    }
+
+    @media (min-width: 640px) {
+      .slide-card { flex: 0 0 120px; }
+    }
+
+    .slide-card:active {
+      transform: scale(0.96);
+    }
+
+    .slide-card img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .slide-number {
+      position: absolute;
+      top: 4px;
+      left: 4px;
+      background: rgba(0, 0, 0, 0.7);
+      color: #fff;
+      font-size: 0.65rem;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 4px;
+      backdrop-filter: blur(4px);
+    }
+
+    /* Fullscreen Slide Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(10px);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+
+    .modal-content {
+      position: relative;
+      max-width: 90vw;
+      max-height: 85vh;
+    }
+
+    .modal-content img {
+      max-width: 100%;
+      max-height: 80vh;
+      border-radius: 12px;
+      object-fit: contain;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.8);
+    }
+
+    .modal-close {
+      position: absolute;
+      top: -40px;
+      right: 0;
+      background: none;
+      border: none;
+      color: #fff;
+      font-size: 1.8rem;
+      cursor: pointer;
     }
 
     .alert {
       display: none;
       padding: 0.85rem 1rem;
-      border-radius: 10px;
+      border-radius: 12px;
       font-size: 0.85rem;
-      margin-top: 1.25rem;
+      margin-top: 1.2rem;
       line-height: 1.4;
     }
 
@@ -270,22 +404,28 @@
       color: #6ee7b7;
     }
 
-    .spinner {
-      display: inline-block;
-      width: 18px;
-      height: 18px;
-      border: 2px solid rgba(255, 255, 255, 0.3);
-      border-radius: 50%;
-      border-top-color: #fff;
-      animation: spin 0.8s linear infinite;
+    .advanced-toggle {
+      font-size: 0.78rem;
+      color: var(--text-dim);
+      background: none;
+      border: none;
+      cursor: pointer;
+      display: block;
+      margin: 1rem auto 0;
+      text-decoration: underline;
     }
 
-    @keyframes spin {
-      to { transform: rotate(360deg); }
+    .advanced-section {
+      display: none;
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px dashed var(--border);
     }
+
+    .advanced-section.show { display: block; }
 
     footer {
-      margin-top: 1.5rem;
+      margin-top: 1.25rem;
       text-align: center;
       font-size: 0.75rem;
       color: var(--text-dim);
@@ -300,17 +440,20 @@
           <svg viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
         </div>
         <h1>Instagram Carousel to PDF</h1>
-        <p class="subtitle">Convert public carousels & slides into high-resolution PDFs instantly.</p>
+        <p class="subtitle">Download all carousel slides into one high-DPI multi-page PDF.</p>
       </div>
 
       <form id="dl-form">
         <div class="form-group">
-          <label for="url">Instagram Post or Reel URL</label>
+          <label for="url">
+            <span>Instagram URL</span>
+            <button type="button" id="paste-btn" class="paste-btn">📋 Paste</button>
+          </label>
           <div class="input-wrapper">
             <input 
               type="text" 
               id="url" 
-              placeholder="https://www.instagram.com/p/C6..." 
+              placeholder="Paste /p/ or /reel/ link..." 
               required 
               autocomplete="off"
             />
@@ -328,42 +471,65 @@
 
         <button type="submit" id="submit-btn" class="btn-submit">
           <span id="btn-text">Download Carousel</span>
-          <div id="btn-spinner" class="spinner" style="display: none;"></div>
         </button>
 
-        <button type="button" id="adv-toggle" class="advanced-toggle">Advanced Settings</button>
+        <!-- Progress Tracker -->
+        <div id="progress-box" class="progress-container">
+          <div class="progress-header">
+            <span id="progress-status" class="progress-status">Fetching metadata...</span>
+            <span id="progress-percent" class="progress-percent">0%</span>
+          </div>
+          <div class="progress-track">
+            <div id="progress-fill" class="progress-fill"></div>
+          </div>
+        </div>
+
+        <button type="button" id="adv-toggle" class="advanced-toggle">Advanced Options</button>
         
         <div id="adv-section" class="advanced-section">
           <div class="form-group">
-            <label for="sessionid">Session ID Cookie (Optional, for rate-limited requests)</label>
-            <input type="text" id="sessionid" placeholder="Paste sessionid cookie value" />
+            <label for="sessionid">Session ID (Optional, for private/rate-limited profiles)</label>
+            <input type="text" id="sessionid" placeholder="Paste sessionid cookie" />
           </div>
         </div>
       </form>
 
-      <!-- Preview Section -->
+      <!-- Live Slide Deck Preview -->
       <div id="preview-section" class="preview-section">
         <div class="preview-header">
-          <span style="font-size: 0.85rem; font-weight: 600;">Detected Slides</span>
+          <span style="font-size: 0.85rem; font-weight: 700;">Carousel Deck</span>
           <span id="slide-count-badge" class="slide-badge">0 slides</span>
         </div>
-        <div id="gallery" class="gallery-grid"></div>
+        <div id="gallery" class="gallery-deck"></div>
       </div>
 
       <div id="alert" class="alert"></div>
     </div>
+
     <footer>
-      <span>FastAPI Async Engine • High-DPI Output</span>
+      <span>FastAPI High-DPI Engine • Mobile & Desktop</span>
     </footer>
+  </div>
+
+  <!-- Fullscreen Modal -->
+  <div id="modal" class="modal">
+    <div class="modal-content">
+      <button id="modal-close" class="modal-close">&times;</button>
+      <img id="modal-img" src="" alt="Enlarged slide" />
+    </div>
   </div>
 
   <script>
     const form = document.getElementById('dl-form');
     const urlInput = document.getElementById('url');
+    const pasteBtn = document.getElementById('paste-btn');
     const sessionInput = document.getElementById('sessionid');
     const submitBtn = document.getElementById('submit-btn');
     const btnText = document.getElementById('btn-text');
-    const btnSpinner = document.getElementById('btn-spinner');
+    const progressBox = document.getElementById('progress-box');
+    const progressStatus = document.getElementById('progress-status');
+    const progressPercent = document.getElementById('progress-percent');
+    const progressFill = document.getElementById('progress-fill');
     const alertBox = document.getElementById('alert');
     const advToggle = document.getElementById('adv-toggle');
     const advSection = document.getElementById('adv-section');
@@ -371,6 +537,9 @@
     const gallery = document.getElementById('gallery');
     const slideBadge = document.getElementById('slide-count-badge');
     const formatBtns = document.querySelectorAll('.format-btn');
+    const modal = document.getElementById('modal');
+    const modalImg = document.getElementById('modal-img');
+    const modalClose = document.getElementById('modal-close');
 
     let selectedFormat = 'pdf';
 
@@ -381,6 +550,18 @@
         selectedFormat = btn.dataset.format;
         btnText.textContent = selectedFormat === 'pdf' ? 'Download PDF' : 'Download ZIP';
       });
+    });
+
+    pasteBtn.addEventListener('click', async () => {
+      try {
+        const text = await navigator.clipboard.readText();
+        if (text) {
+          urlInput.value = text.trim();
+          triggerAutoPreview();
+        }
+      } catch (err) {
+        urlInput.focus();
+      }
     });
 
     advToggle.addEventListener('click', () => {
@@ -397,8 +578,19 @@
       alertBox.style.display = 'none';
     }
 
-    // Auto-preview on paste
-    urlInput.addEventListener('input', async () => {
+    function setProgress(status, percent) {
+      progressBox.style.display = 'block';
+      progressStatus.textContent = status;
+      progressPercent.textContent = `${percent}%`;
+      progressFill.style.width = `${percent}%`;
+    }
+
+    function hideProgress() {
+      progressBox.style.display = 'none';
+      progressFill.style.width = '0%';
+    }
+
+    async function triggerAutoPreview() {
       const url = urlInput.value.trim();
       if (!url.includes('instagram.com/')) return;
 
@@ -412,9 +604,17 @@
         if (data.success && data.slides.length > 0) {
           gallery.innerHTML = '';
           data.slides.forEach(s => {
-            const img = document.createElement('img');
-            img.src = s.url;
-            gallery.appendChild(img);
+            const card = document.createElement('div');
+            card.className = 'slide-card';
+            card.innerHTML = `
+              <span class="slide-number">#${s.index}</span>
+              <img src="${s.url}" loading="lazy" alt="Slide ${s.index}" />
+            `;
+            card.addEventListener('click', () => {
+              modalImg.src = s.url;
+              modal.style.display = 'flex';
+            });
+            gallery.appendChild(card);
           });
           slideBadge.textContent = `${data.slide_count} slides`;
           previewSection.style.display = 'block';
@@ -423,6 +623,13 @@
       } catch (e) {
         // silent fail on preview
       }
+    }
+
+    urlInput.addEventListener('input', triggerAutoPreview);
+
+    modalClose.addEventListener('click', () => { modal.style.display = 'none'; });
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) modal.style.display = 'none';
     });
 
     form.addEventListener('submit', async (e) => {
@@ -433,10 +640,14 @@
       if (!url) return;
 
       submitBtn.disabled = true;
-      btnText.textContent = 'Generating...';
-      btnSpinner.style.display = 'inline-block';
+      btnText.textContent = 'Processing...';
+
+      setProgress('1/3: Extracting carousel nodes...', 25);
 
       try {
+        await new Promise(r => setTimeout(r, 400));
+        setProgress('2/3: Fetching high-resolution frames...', 60);
+
         const res = await fetch('/api/download', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -452,12 +663,15 @@
           throw new Error(errData.detail || 'Failed to download');
         }
 
+        setProgress('3/3: Compiling document...', 90);
+
         const blob = await res.blob();
         const disposition = res.headers.get('content-disposition') || '';
         let filename = selectedFormat === 'pdf' ? 'carousel.pdf' : 'slides.zip';
         const match = disposition.match(/filename="?([^"]+)"?/);
         if (match) filename = match[1];
 
+        // Trigger download
         const downloadUrl = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = downloadUrl;
@@ -467,13 +681,15 @@
         a.remove();
         window.URL.revokeObjectURL(downloadUrl);
 
-        showAlert(`Successfully downloaded ${filename}!`, false);
+        setProgress('Complete!', 100);
+        setTimeout(hideProgress, 1200);
+        showAlert(`🎉 Successfully downloaded ${filename}!`, false);
       } catch (err) {
+        hideProgress();
         showAlert(err.message || 'An error occurred while fetching the post.');
       } finally {
         submitBtn.disabled = false;
         btnText.textContent = selectedFormat === 'pdf' ? 'Download PDF' : 'Download ZIP';
-        btnSpinner.style.display = 'none';
       }
     });
   </script>
